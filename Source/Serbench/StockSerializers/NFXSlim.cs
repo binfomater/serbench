@@ -16,15 +16,26 @@ namespace Serbench.StockSerializers
   /// <summary>
   /// Represents NFX.Serialization.Slim technology
   /// </summary>
+  [SerializerInfo( 
+     Family = SerializerFamily.Binary,    
+     MetadataRequirement = MetadataRequirement.None,
+     VendorName = "IT Adapter LLC",
+     VendorLicense = "Apache 2.0 + Commercial",
+     VendorURL = "http://itadapter.com",
+     VendorPackageURL = "http://github.com/aumcode/nfx",
+     FormatName = "Slim",
+     LinesOfCodeK = 7,    
+     DataTypes = 32,
+     Assemblies = 1,
+     ExternalReferences = 0,
+     PackageSizeKb = 1500
+  )]
   public class NFXSlim : Serializer
   {
-    public const string CONFIG_KNOWN_TYPE_SECTION = "known-type";
-
 
     public NFXSlim(TestingSystem context, IConfigSectionNode conf) : base(context, conf) 
     {
-      var known = conf.Children.Where(cn => cn.IsSameName(CONFIG_KNOWN_TYPE_SECTION))
-                               .Select( cn => Type.GetType( cn.AttrByName(Configuration.CONFIG_NAME_ATTR).Value ));   
+      Type[] known = ReadKnownTypes(conf); 
 
       //we create type registry with well-known types that serializer does not have to emit every time
       m_TypeRegistry = new TypeRegistry(TypeRegistry.BoxedCommonTypes,
@@ -71,6 +82,14 @@ namespace Serbench.StockSerializers
       return m_Serializer.Deserialize(stream);
     }
 
+    public override void BeforeSerializationIterationBatch(Test test)
+    {
+      if (m_Batching && 
+          (test.SerIterations>1 || test.DeserIterations>1))
+       throw new SerbenchException("SlimSerializer test is not properly configured. If BATCHING=true, then test may have many runs, not many ser/deser iterations as batching retains the stream state and is not an idempotent operation");
+    }
+
+
     public override void ParallelSerialize(object root, Stream stream)
     {
       //parallel mode can not use batching because it is not thread-safe
@@ -82,7 +101,6 @@ namespace Serbench.StockSerializers
       //parallel mode can not use batching because it is not thread-safe
       return m_Serializer.Deserialize(stream);
     }
-
 
   }
 
