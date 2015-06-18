@@ -20,4 +20,4 @@ The config file may be in either XML or Laconic formats where the later is much 
 This section describes how to develop more tests and add support for more serializers.
 ###Develop New Tests / Cases
 
-###Add New Serializers to Test Against
+###Add New Serializers
